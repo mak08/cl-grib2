@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Description  libgrib_api bindings
 ;;; Author         Michael Kappert 2015
-;;; Last Modified <michael 2017-04-06 00:28:39>
+;;; Last Modified <michael 2017-05-03 23:47:43>
 
 (in-package cl-grib2)
 
@@ -403,6 +403,8 @@
 ;; Get double array values from a key. 
 
 (defun grib-get-double-array (handle key &aux (length (grib-get-size handle key)))
+  ;; Try to work around bugs.launchpad.net/sbcl/+bug/1446962
+  #+sbcl (sb-ext:gc :full t)
   (with-foreign-objects
       ((value :double length)
        (size :int))
@@ -412,14 +414,36 @@
       (if (= retval 0)
           (let* ((length-out (mem-ref size :int))
                  (result (make-array length-out :element-type 'double-float)))
-            (prog1 
-                (dotimes (k length-out result)
-                  (setf (aref result k) (mem-ref value :double k)))
-              ;; Try to work around bugs.launchpad.net/sbcl/+bug/1446962
-              #+sbcl (sb-ext:gc :full t)))
+            (dotimes (k length-out result)
+              (setf (aref result k) (mem-aref value :double k))))
           (values nil retval)))))
 
 (defcfun grib_get_double_array :int
+  (handle :pointer)
+  (key :string)
+  (value :pointer)
+  (length (:pointer :int)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Get long array values from a key. 
+
+(defun grib-get-long-array (handle key &aux (length (grib-get-size handle key)))
+  ;; Try to work around bugs.launchpad.net/sbcl/+bug/1446962
+  #+sbcl (sb-ext:gc :full t)
+  (with-foreign-objects
+      ((value :long length)
+       (size :int))
+    (setf (mem-aref size :int) length)
+    (let ((retval
+           (grib_get_long_array handle key value size)))
+      (if (= retval 0)
+          (let* ((length-out (mem-ref size :int))
+                 (result (make-array length-out :element-type '(signed-byte 64))))
+            (dotimes (k length-out result)
+              (setf (aref result k) (mem-aref value :long k))))
+          (values nil retval)))))
+
+(defcfun grib_get_long_array :int
   (handle :pointer)
   (key :string)
   (value :pointer)
