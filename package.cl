@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Description
 ;;; Author         Michael Kappert 2017
-;;; Last Modified <michael 2017-05-03 23:59:04>
+;;; Last Modified <michael 2017-09-21 23:23:48>
 
 (defpackage "CL-GRIB2"
   (:use "COMMON-LISP" "LOCAL-TIME" "CFFI")
@@ -39,6 +39,7 @@
             "GRIB-GET-STRING"
             "GRIB-GET-LONG-ARRAY"
             "GRIB-GET-DOUBLE-ARRAY"
+            "GRIB-GET-DOUBLE-ARRAY-AS-SINGLE"
 
             "GRIB-ITERATOR-NEW"
             "GRIB-ITERATOR-NEXT"))

@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Description  libgrib_api bindings
 ;;; Author         Michael Kappert 2015
-;;; Last Modified <michael 2017-05-03 23:47:43>
+;;; Last Modified <michael 2017-10-21 21:01:28>
 
 (in-package cl-grib2)
 
@@ -414,10 +414,28 @@
       (if (= retval 0)
           (let* ((length-out (mem-ref size :int))
                  (result (make-array length-out :element-type 'double-float)))
+            (log2:trace "Creating array(~a)" length-out)
             (dotimes (k length-out result)
               (setf (aref result k) (mem-aref value :double k))))
           (values nil retval)))))
 
+(defun grib-get-double-array-as-single (handle key &aux (length (grib-get-size handle key)))
+  ;; Try to work around bugs.launchpad.net/sbcl/+bug/1446962
+  #+sbcl (sb-ext:gc :full t)
+  (with-foreign-objects
+      ((value :double length)
+       (size :int))
+    (setf (mem-aref size :int) length)
+    (let ((retval
+           (grib_get_double_array handle key value size)))
+      (if (= retval 0)
+          (let* ((length-out (mem-ref size :int))
+                 (result (make-array length-out :element-type 'single-float)))
+            (log2:trace "Creating array(~a)" length-out)
+            (dotimes (k length-out result)
+              (setf (aref result k) (coerce (mem-aref value :double k) 'single-float))))
+          (values nil retval)))))
+  
 (defcfun grib_get_double_array :int
   (handle :pointer)
   (key :string)
